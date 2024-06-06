@@ -30,6 +30,10 @@ class _HomeSreenState extends State<HomeSreen> {
 
   @override
   Widget build(BuildContext context) {
+    Future<void> _refresh() async {
+      return Future.delayed(Duration(seconds: 1));
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -38,77 +42,80 @@ class _HomeSreenState extends State<HomeSreen> {
         foregroundColor: Colors.white,
         title: Center(child: Text("Keep note")),
       ),
-      body: FutureBuilder(
-        builder: (context, AsyncSnapshot<Box<Todo>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else {
-            final todoBox = snapshot.data!;
-            return ValueListenableBuilder(
-              valueListenable: todoBox.listenable(),
-              builder: (context, Box<Todo> box, _) {
-                return ListView.builder(
-                  itemCount: box.length,
-                  itemBuilder: ((context, index) {
-                    Todo todo = box.getAt(index)!;
-                    return Container(
-                      margin: EdgeInsets.only(top: 20, left: 9, right: 9),
-                      decoration: BoxDecoration(
-                        color: todo.isComplited
-                            ? const Color.fromARGB(255, 227, 220, 220)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Dismissible(
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent,
-                            borderRadius: BorderRadius.circular(10),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder(
+          builder: (context, AsyncSnapshot<Box<Todo>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else {
+              final todoBox = snapshot.data!;
+              return ValueListenableBuilder(
+                valueListenable: todoBox.listenable(),
+                builder: (context, Box<Todo> box, _) {
+                  return ListView.builder(
+                    itemCount: box.length,
+                    itemBuilder: ((context, index) {
+                      Todo todo = box.getAt(index)!;
+                      return Container(
+                        margin: EdgeInsets.only(top: 20, left: 9, right: 9),
+                        decoration: BoxDecoration(
+                          color: todo.isComplited
+                              ? const Color.fromARGB(255, 227, 220, 220)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Dismissible(
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.centerRight,
+                            padding: EdgeInsets.symmetric(horizontal: 20),
+                            child: Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
                           ),
-                          alignment: Alignment.centerRight,
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Icon(
-                            Icons.delete,
-                            color: Colors.white,
+                          onDismissed: (direction) {
+                            setState(() {
+                              todo.delete();
+                            });
+                          },
+                          key: Key(todo.dateTime.toString()),
+                          child: ListTile(
+                            title: InkWell(
+                              onTap: () {
+                                _editTodoDialog(context, todo);
+                              },
+                              child: Text(todo.title),
+                            ),
+                            subtitle: Text(todo.description),
+                            trailing: Text(
+                              DateFormat.yMMMd().format(todo.dateTime),
+                            ),
+                            leading: Checkbox(
+                              value: todo.isComplited,
+                              onChanged: (value) {
+                                setState(() {
+                                  todo.isComplited = value!;
+                                  todo.save();
+                                });
+                              },
+                            ),
                           ),
                         ),
-                        onDismissed: (direction) {
-                          setState(() {
-                            todo.delete();
-                          });
-                        },
-                        key: Key(todo.dateTime.toString()),
-                        child: ListTile(
-                          title: InkWell(
-                            onTap: () {
-                              _editTodoDialog(context, todo);
-                            },
-                            child: Text(todo.title),
-                          ),
-                          subtitle: Text(todo.description),
-                          trailing: Text(
-                            DateFormat.yMMMd().format(todo.dateTime),
-                          ),
-                          leading: Checkbox(
-                            value: todo.isComplited,
-                            onChanged: (value) {
-                              setState(() {
-                                todo.isComplited = value!;
-                                todo.save();
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                );
-              },
-            );
-          }
-        },
-        future: _todoBoxFuture,
+                      );
+                    }),
+                  );
+                },
+              );
+            }
+          },
+          future: _todoBoxFuture,
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color.fromARGB(255, 49, 116, 171),
