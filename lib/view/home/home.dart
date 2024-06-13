@@ -38,6 +38,7 @@ class _HomeSreenState extends State<HomeSreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 49, 116, 171),
+        // backgroundColor: const Color.fromARGB(255, 49, 116, 171),
         elevation: 0,
         foregroundColor: Colors.white,
         title: Center(child: Text("Keep note")),
